@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bottom Music Player</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+html,body{
+    width:100%;
+    height:100%;
+}
+
+body{
+    min-height:100vh;
+
+    /* FULL BACKGROUND */
+    background:
+        url("https://i.postimg.cc/Kvm7DrC1/file-00000000a7a481fd888dfc8adaf29dc1.png")
+        center center / cover
+        no-repeat fixed;
+
+    font-family:Arial,sans-serif;
+    color:#fff;
+}
+
+
+/* =========================================
+   DARK OVERLAY
+========================================= */
+
+body::before{
+    content:"";
+    position:fixed;
+    inset:0;
+
+    background:rgba(0,0,0,.12);
+
+    pointer-events:none;
+}
+
+
+/* =========================================
+   SMALL BOTTOM MUSIC CONTROLLER
+========================================= */
+
+.music-player{
+    position:fixed;
+
+    left:50%;
+    bottom:18px;
+
+    transform:translateX(-50%);
+
+    width:min(430px,calc(100% - 24px));
+
+    padding:12px 14px;
+
+    border-radius:18px;
+
+    background:rgba(20,20,20,.35);
+
+    border:1px solid rgba(255,255,255,.18);
+
+    backdrop-filter:blur(18px);
+    -webkit-backdrop-filter:blur(18px);
+
+    box-shadow:
+        0 10px 35px rgba(0,0,0,.28);
+
+    z-index:10;
+}
+
+
+/* =========================================
+   SONG INFO
+========================================= */
+
+.song-info{
+    text-align:center;
+
+    margin-bottom:8px;
+}
+
+#title{
+    font-size:13px;
+    font-weight:600;
+
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+#track{
+    font-size:10px;
+
+    opacity:.65;
+
+    margin-top:2px;
+}
+
+
+/* =========================================
+   PROGRESS
+========================================= */
+
+#progress{
+    width:100%;
+
+    height:3px;
+
+    appearance:none;
+    -webkit-appearance:none;
+
+    border-radius:20px;
+
+    background:rgba(255,255,255,.22);
+
+    outline:none;
+
+    cursor:pointer;
+}
+
+#progress::-webkit-slider-thumb{
+    appearance:none;
+    -webkit-appearance:none;
+
+    width:9px;
+    height:9px;
+
+    border-radius:50%;
+
+    background:#fff;
+}
+
+#progress::-moz-range-thumb{
+    width:9px;
+    height:9px;
+
+    border:0;
+    border-radius:50%;
+
+    background:#fff;
+}
+
+
+/* =========================================
+   TIME
+========================================= */
+
+.time{
+    display:flex;
+    justify-content:space-between;
+
+    margin-top:3px;
+
+    font-size:9px;
+
+    opacity:.6;
+}
+
+
+/* =========================================
+   BOTTOM CONTROLS
+========================================= */
+
+.controls{
+    display:flex;
+
+    align-items:center;
+    justify-content:center;
+
+    gap:14px;
+
+    margin-top:8px;
+}
+
+button{
+    width:34px;
+    height:34px;
+
+    border-radius:50%;
+
+    border:1px solid rgba(255,255,255,.18);
+
+    background:rgba(255,255,255,.10);
+
+    color:#fff;
+
+    font-size:13px;
+
+    cursor:pointer;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    transition:.2s;
+}
+
+button:hover{
+    background:rgba(255,255,255,.20);
+
+    transform:translateY(-2px);
+}
+
+#play{
+    width:42px;
+    height:42px;
+
+    font-size:16px;
+
+    background:rgba(255,255,255,.18);
+}
+
+
+/* =========================================
+   STATUS
+========================================= */
+
+#status{
+    text-align:center;
+
+    margin-top:5px;
+
+    font-size:9px;
+
+    opacity:.55;
+
+    min-height:11px;
+}
+
+
+/* =========================================
+   HIDDEN YOUTUBE PLAYER
+========================================= */
+
+#youtube{
+    position:fixed;
+
+    width:1px;
+    height:1px;
+
+    left:-9999px;
+    top:-9999px;
+
+    opacity:0;
+
+    pointer-events:none;
+}
+
+
+/* =========================================
+   MOBILE
+========================================= */
+
+@media(max-width:480px){
+
+    .music-player{
+        bottom:10px;
+
+        width:calc(100% - 16px);
+
+        padding:10px 12px;
+
+        border-radius:16px;
+    }
+
+    .controls{
+        gap:12px;
+    }
+
+    button{
+        width:32px;
+        height:32px;
+    }
+
+    #play{
+        width:40px;
+        height:40px;
+    }
+
+    #title{
+        font-size:12px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+
+<!-- =========================================
+     BOTTOM MUSIC CONTROLLER
+========================================= -->
+
+<div class="music-player">
+
+    <div class="song-info">
+
+        <div id="title">
+            Loading music...
+        </div>
+
+        <div id="track">
+            Playlist loading...
+        </div>
+
+    </div>
+
+
+    <input
+        id="progress"
+        type="range"
+        min="0"
+        max="100"
+        step="0.1"
+        value="0"
+    >
+
+
+    <div class="time">
+
+        <span id="current">
+            0:00
+        </span>
+
+        <span id="duration">
+            0:00
+        </span>
+
+    </div>
+
+
+    <div class="controls">
+
+        <button id="prev" title="Previous">
+            ⏮
+        </button>
+
+        <button id="play" title="Play / Pause">
+            ▶
+        </button>
+
+        <button id="next" title="Next">
+            ⏭
+        </button>
+
+    </div>
+
+
+    <div id="status">
+        Connecting...
+    </div>
+
+</div>
+
+
+<!-- HIDDEN YOUTUBE PLAYER -->
+
+<div id="youtube"></div>
+
+
+<script>
+
+/* =========================================
+   YOUR PLAYLIST
+========================================= */
+
+const PLAYLIST_ID =
+"PLTmtAeNORLyNsvdIKwPuwNoeN0rLiiMq0";
+
+
+/* =========================================
+   VARIABLES
+========================================= */
+
+let player;
+let timer;
+
+
+/* =========================================
+   ELEMENTS
+========================================= */
+
+const title =
+document.getElementById("title");
+
+const track =
+document.getElementById("track");
+
+const status =
+document.getElementById("status");
+
+const play =
+document.getElementById("play");
+
+const progress =
+document.getElementById("progress");
+
+const current =
+document.getElementById("current");
+
+const duration =
+document.getElementById("duration");
+
+const next =
+document.getElementById("next");
+
+const prev =
+document.getElementById("prev");
+
+
+/* =========================================
+   YOUTUBE API
+========================================= */
+
+window.onYouTubeIframeAPIReady = function(){
+
+    player = new YT.Player("youtube",{
+
+        width:"1",
+        height:"1",
+
+        playerVars:{
+            listType:"playlist",
+            list:PLAYLIST_ID,
+            controls:0,
+            autoplay:0,
+            playsinline:1,
+            rel:0
+        },
+
+        events:{
+            onReady:onReady,
+            onStateChange:onStateChange,
+            onError:onError
+        }
+
+    });
+
+};
+
+
+/* =========================================
+   READY
+========================================= */
+
+function onReady(){
+
+    status.textContent =
+    "Loading playlist...";
+
+    player.loadPlaylist({
+        listType:"playlist",
+        list:PLAYLIST_ID,
+        index:0
+    });
+
+
+    let count=0;
+
+    const check=setInterval(()=>{
+
+        const list =
+        player.getPlaylist();
+
+        if(list && list.length){
+
+            clearInterval(check);
+
+
+            /*
+             ENABLE SHUFFLE
+            */
+
+            player.setShuffle(true);
+
+            player.setLoop(true);
+
+
+            /*
+             RANDOM START
+            */
+
+            const random =
+            Math.floor(
+                Math.random()*list.length
+            );
+
+            player.playVideoAt(random);
+
+
+            status.textContent =
+            `${list.length} songs • Shuffle`;
+
+        }
+
+
+        count++;
+
+        if(count>20){
+
+            clearInterval(check);
+
+            status.textContent =
+            "Playlist load failed";
+        }
+
+    },500);
+
+}
+
+
+/* =========================================
+   STATE CHANGE
+========================================= */
+
+function onStateChange(event){
+
+    if(
+        event.data ===
+        YT.PlayerState.PLAYING
+    ){
+
+        play.textContent="⏸";
+
+        status.textContent =
+        "Playing • Shuffle";
+
+        updateSong();
+
+        startTimer();
+    }
+
+
+    if(
+        event.data ===
+        YT.PlayerState.PAUSED
+    ){
+
+        play.textContent="▶";
+
+        stopTimer();
+
+        status.textContent =
+        "Paused";
+    }
+
+
+    if(
+        event.data ===
+        YT.PlayerState.ENDED
+    ){
+
+        next.click();
+    }
+
+
+    if(
+        event.data ===
+        YT.PlayerState.CUED
+    ){
+
+        updateSong();
+    }
+
+}
+
+
+/* =========================================
+   SONG INFO
+========================================= */
+
+function updateSong(){
+
+    const data =
+    player.getVideoData();
+
+    const list =
+    player.getPlaylist();
+
+    const index =
+    player.getPlaylistIndex();
+
+
+    if(data && data.title){
+
+        title.textContent =
+        data.title;
+    }
+
+
+    if(list){
+
+        track.textContent =
+        `Track ${index+1} of ${list.length}`;
+    }
+
+}
+
+
+/* =========================================
+   PLAY / PAUSE
+========================================= */
+
+play.onclick=function(){
+
+    if(!player)return;
+
+
+    const state =
+    player.getPlayerState();
+
+
+    if(
+        state ===
+        YT.PlayerState.PLAYING
+    ){
+
+        player.pauseVideo();
+
+    }else{
+
+        player.playVideo();
+    }
+
+};
+
+
+/* =========================================
+   NEXT
+========================================= */
+
+next.onclick=function(){
+
+    if(player){
+
+        player.nextVideo();
+    }
+
+};
+
+
+/* =========================================
+   PREVIOUS
+========================================= */
+
+prev.onclick=function(){
+
+    if(!player)return;
+
+
+    if(
+        player.getCurrentTime()>5
+    ){
+
+        player.seekTo(0,true);
+
+    }else{
+
+        player.previousVideo();
+    }
+
+};
+
+
+/* =========================================
+   PROGRESS
+========================================= */
+
+function startTimer(){
+
+    stopTimer();
+
+
+    timer=setInterval(()=>{
+
+        if(!player)return;
+
+
+        const c =
+        player.getCurrentTime();
+
+        const d =
+        player.getDuration();
+
+
+        if(!d)return;
+
+
+        progress.value =
+        (c/d)*100;
+
+
+        current.textContent =
+        formatTime(c);
+
+        duration.textContent =
+        formatTime(d);
+
+
+    },500);
+
+}
+
+
+/* =========================================
+   STOP TIMER
+========================================= */
+
+function stopTimer(){
+
+    if(timer){
+
+        clearInterval(timer);
+
+        timer=null;
+    }
+
+}
+
+
+/* =========================================
+   SEEK
+========================================= */
+
+progress.oninput=function(){
+
+    if(!player)return;
+
+
+    const d =
+    player.getDuration();
+
+
+    if(d){
+
+        player.seekTo(
+            (progress.value/100)*d,
+            true
+        );
+
+    }
+
+};
+
+
+/* =========================================
+   TIME FORMAT
+========================================= */
+
+function formatTime(seconds){
+
+    seconds =
+    Math.floor(seconds || 0);
+
+
+    const min =
+    Math.floor(seconds/60);
+
+
+    const sec =
+    seconds%60;
+
+
+    return (
+        min +
+        ":" +
+        String(sec).padStart(2,"0")
+    );
+
+}
+
+
+/* =========================================
+   ERROR
+========================================= */
+
+function onError(event){
+
+    status.textContent =
+    "YouTube error: "+event.data;
+
+}
+
+</script>
+
+
+<!-- YOUTUBE API -->
+
+<script
+src="https://www.youtube.com/iframe_api">
+</script>
+
+</body>
+</html>
